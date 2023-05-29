@@ -1,9 +1,9 @@
-use ruschio::{evaluate, read_ndarray, Dataset, Kmeans};
+use ruschio::{read_ndarray, Dataset, Kmeans};
 
 const N_SAMPLES: usize = 1000;
 const N_FEATURES: usize = 2;
-const K: usize = 2;
-const MAX_ITERS: usize = 1000;
+const K: usize = 3;
+const MAX_ITERS: usize = 100_000;
 
 fn main() {
     let samples: Vec<f32> = read_ndarray("tests/blob_data", N_SAMPLES * N_FEATURES).unwrap();
@@ -15,8 +15,5 @@ fn main() {
     let kmean = Kmeans::new(K, Some(MAX_ITERS));
 
     // Run the algorithm
-    let (_centroids, predicted_classes) = kmean.fit(&dataset);
-
-    let accuracy = evaluate(&predicted_classes, &samples_classes);
-    println!("Got accuracy {}", accuracy)
+    let (_centroids, _predicted_classes) = kmean.fit(&dataset, &samples_classes);
 }
