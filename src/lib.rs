@@ -96,13 +96,12 @@ impl Kmeans {
         }
     }
 
-    pub fn fit(&self, dataset: &Dataset, truth: &Vec<usize>) -> (Vec<Sample>, Vec<usize>) {
+    pub fn fit(&self, dataset: &Dataset) -> (Vec<Sample>, Vec<usize>) {
         // Pick random K vectors from the dataset
         let mut rng = rand::thread_rng();
         let mut centroids: Vec<Sample> = Vec::with_capacity(self.n_clusters);
         for _k in 0..self.n_clusters {
             let n = rng.gen_range(0..dataset.samples.len());
-            println!("Init clusters ; chose sample  {}", n);
             centroids.push(dataset.samples[n].clone());
         }
 
@@ -113,6 +112,7 @@ impl Kmeans {
             // compute distances to centroids
             // Find minimum distance
             // Assign datapoint to centroids
+            let mut assigment: Vec<usize> = vec![0; dataset.samples.len()];
             for (idx, sample) in dataset.samples.iter().enumerate() {
                 let (class, _distance) = centroids
                     .iter()
@@ -121,22 +121,24 @@ impl Kmeans {
                     .min_by(|&(_, i), &(_, j)| i.total_cmp(&j))
                     .unwrap();
 
-                pred_classes[idx] = class;
+                assigment[idx] = class;
             }
-
-            // recompute cluster centroids
-            for k in 0..self.n_clusters {
-                let filtered_samples: Vec<&Sample> = pred_classes
-                    .iter()
-                    .zip(dataset.samples.iter())
-                    .filter(|&(class, _)| *class == k)
-                    .map(|(_, item)| item)
-                    .collect();
-                centroids[k] = compute_centroid(&filtered_samples);
-            }
-            let accuracy = evaluate(&pred_classes, &truth);
-            if iter % 100 == 0 {
-                println!("Accuracy at iter {} : {}", iter, accuracy)
+            // Stopping criterion : if pred_classes didn't change
+            if assigment != pred_classes {
+                pred_classes = assigment;
+                // recompute cluster centroids
+                for k in 0..self.n_clusters {
+                    let filtered_samples: Vec<&Sample> = pred_classes
+                        .iter()
+                        .zip(dataset.samples.iter())
+                        .filter(|&(class, _)| *class == k)
+                        .map(|(_, item)| item)
+                        .collect();
+                    centroids[k] = compute_centroid(&filtered_samples);
+                }
+            } else {
+                println!("Converged after {} iterations.", iter);
+                break;
             }
         }
         (centroids, pred_classes)
