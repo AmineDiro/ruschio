@@ -1,8 +1,11 @@
+#![feature(portable_simd)]
 use rand::Rng;
 use rayon::prelude::*;
 use std::io::{BufReader, Read};
 use std::io::{BufWriter, Error};
 use std::{fs::File, io::Write};
+
+mod linalg;
 
 pub trait AsBytes {
     fn from_bytes(bytes: [u8; 4]) -> Self;
@@ -50,33 +53,6 @@ impl Dataset {
     }
 }
 
-pub fn l2_distance(s1: &Sample, s2: &Sample) -> f32 {
-    f32::sqrt(
-        s1.iter()
-            .zip(s2.iter())
-            .map(|(i, j)| f32::powi(i - j, 2))
-            .sum(),
-    )
-}
-
-pub fn compute_centroid(samples: &Vec<&Sample>) -> Sample {
-    let mut centroid: Sample = Vec::new();
-    // todo : figureout how to idiomatically return
-    if samples.is_empty() {
-        return centroid;
-    }
-
-    // todo : how to get dimension from sample ??
-    for i in 0..samples[0].len() {
-        let mut temp: f32 = 0.0;
-        for sample in samples {
-            temp += sample[i];
-        }
-        centroid.push(temp as f32 / samples.len() as f32);
-    }
-    centroid
-}
-
 #[derive(Debug)]
 pub struct Kmeans {
     // number of clusters
@@ -114,7 +90,7 @@ impl Kmeans {
                 .map(|sample| {
                     let (class, _distance) = centroids
                         .iter()
-                        .map(|c| l2_distance(c, sample))
+                        .map(|c| linalg::l2_distance(c, sample))
                         .enumerate()
                         .min_by(|&(_, i), &(_, j)| i.total_cmp(&j))
                         .unwrap();
@@ -132,7 +108,7 @@ impl Kmeans {
                         .filter(|&(class, _)| *class == k)
                         .map(|(_, item)| item)
                         .collect();
-                    centroids[k] = compute_centroid(&filtered_samples);
+                    centroids[k] = linalg::compute_centroid(&filtered_samples);
                 }
             } else {
                 println!("Converged after {} iterations.", iter);
@@ -168,52 +144,7 @@ pub fn evaluate(predicted: &Vec<usize>, truth: &Vec<usize>) -> f32 {
 
 #[cfg(test)]
 mod tests {
-    use std::vec;
-
     use super::*;
-    #[test]
-    fn test_l2_distance() {
-        let s1: Vec<f32> = vec![0.43835984, -0.11517563, 1.22428137, 0.72168846, -0.89573074];
-        assert_eq!(l2_distance(&s1, &s1.clone()), 0.0);
-
-        let s1: Vec<f32> = vec![1.0, 0.0];
-        let s2: Vec<f32> = vec![0.0, 0.0];
-        assert_eq!(l2_distance(&s1, &s2), 1.0);
-
-        let s1: Vec<f32> = vec![-1.0, 0.0];
-        let s2: Vec<f32> = vec![0.0, 0.0];
-        assert_eq!(l2_distance(&s1, &s2), 1.0);
-
-        let s1: Vec<f32> = vec![0.12967037, 0.11381539, 0.48476367, -0.51196512, 0.11607633];
-        let s2: Vec<f32> = vec![-1.76968614, 0.62421, 1.0612931, -0.283521, 1.25854718];
-        let epsilon = 0.000001;
-        assert!((l2_distance(&s1, &s2) - 2.3575135930492666).abs() < epsilon);
-    }
-    #[test]
-    fn test_compute_centroid() {
-        let mut samples: Vec<&Sample> = Vec::new();
-        let sample: Sample = vec![1.0, 1.0];
-        for _ in 0..10 {
-            samples.push(&sample);
-        }
-        let c = compute_centroid(&samples);
-
-        dbg!("{:?}", &c);
-        assert!(c == sample)
-    }
-    #[test]
-    fn test_compute_centroid_complex() {
-        let mut samples: Vec<&Sample> = Vec::new();
-        let s1: Sample = vec![1.0, 0.0];
-        let s2: Sample = vec![0.0, 1.0];
-        samples.push(&s1);
-        samples.push(&s2);
-        let c = compute_centroid(&samples);
-
-        dbg!("{:?}", &c);
-        assert!(c == vec![0.5, 0.5])
-    }
-
     #[test]
     fn test_accuracy() {
         let truth: Vec<usize> = vec![1, 0];
