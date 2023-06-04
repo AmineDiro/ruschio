@@ -1,6 +1,8 @@
 use rand::Rng;
-use std::fs::File;
+use rayon::prelude::*;
 use std::io::{BufReader, Read};
+use std::io::{BufWriter, Error};
+use std::{fs::File, io::Write};
 
 pub trait AsBytes {
     fn from_bytes(bytes: [u8; 4]) -> Self;
@@ -83,13 +85,7 @@ pub struct Kmeans {
 }
 
 impl Kmeans {
-    pub fn new(n_clusters: usize, max_iterations: Option<usize>) -> Self {
-        let max_iterations = if max_iterations.is_none() {
-            1000
-        } else {
-            max_iterations.unwrap()
-        };
-
+    pub fn new(n_clusters: usize, max_iterations: usize) -> Self {
         Kmeans {
             n_clusters,
             max_iterations: max_iterations,
@@ -112,17 +108,19 @@ impl Kmeans {
             // compute distances to centroids
             // Find minimum distance
             // Assign datapoint to centroids
-            let mut assigment: Vec<usize> = vec![0; dataset.samples.len()];
-            for (idx, sample) in dataset.samples.iter().enumerate() {
-                let (class, _distance) = centroids
-                    .iter()
-                    .map(|c| l2_distance(c, sample))
-                    .enumerate()
-                    .min_by(|&(_, i), &(_, j)| i.total_cmp(&j))
-                    .unwrap();
-
-                assigment[idx] = class;
-            }
+            let assigment = dataset
+                .samples
+                .par_iter()
+                .map(|sample| {
+                    let (class, _distance) = centroids
+                        .iter()
+                        .map(|c| l2_distance(c, sample))
+                        .enumerate()
+                        .min_by(|&(_, i), &(_, j)| i.total_cmp(&j))
+                        .unwrap();
+                    class
+                })
+                .collect();
             // Stopping criterion : if pred_classes didn't change
             if assigment != pred_classes {
                 pred_classes = assigment;
@@ -145,7 +143,20 @@ impl Kmeans {
     }
 }
 
+pub fn dump_result(classes: &Vec<usize>, file_path: &str) -> Result<(), Error> {
+    let f = File::create(file_path)?;
+    let mut writer = BufWriter::new(f);
+    let written_bytes: usize = classes
+        .iter()
+        .map(|e| writer.write(&e.to_le_bytes()).unwrap())
+        .sum();
+    writer.flush()?;
+    assert_eq!(classes.len() * 8, written_bytes);
+    Ok(())
+}
+
 pub fn evaluate(predicted: &Vec<usize>, truth: &Vec<usize>) -> f32 {
+    // TODO: incorrect evaluation
     let correct: Vec<usize> = predicted
         .iter()
         .zip(truth.iter())

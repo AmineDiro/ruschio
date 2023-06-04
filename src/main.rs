@@ -1,32 +1,35 @@
-use std::io::{BufWriter, Error};
-use std::{fs::File, io::Write};
+use clap::Parser;
+use ruschio::*;
 
-use ruschio::{evaluate, read_ndarray, Dataset, Kmeans};
+/// Naive Kmean algorithm
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Config {
+    #[arg(short, long)]
+    nsamples: usize,
 
-const N_SAMPLES: usize = 1000;
-const N_FEATURES: usize = 2;
-const K: usize = 3;
-const MAX_ITERS: usize = 100_000;
+    #[arg(long, default_value_t = 2)]
+    nfeatures: usize,
 
-fn dump_result(classes: &Vec<usize>, file_path: &str) -> Result<(), Error> {
-    let f = File::create(file_path)?;
-    let mut writer = BufWriter::new(f);
-    let written_bytes: usize = classes
-        .iter()
-        .map(|e| writer.write(&e.to_le_bytes()).unwrap())
-        .sum();
-    writer.flush()?;
-    assert_eq!(classes.len() * 8, written_bytes);
-    Ok(())
+    #[arg(long, default_value_t = 3)]
+    nclusters: usize,
+
+    #[arg(short, long, default_value_t = 1000)]
+    max_iterations: usize,
 }
 
 fn main() {
-    let samples: Vec<f32> = read_ndarray("tests/blob_data", N_SAMPLES * N_FEATURES).unwrap(); // N_SAMPLES x N_features (2)
-    let mut samples_classes: Vec<f32> = read_ndarray("tests/blob_class", N_SAMPLES).unwrap();
+    let config = Config::parse();
+
+    println!("{:?}", config);
+
+    let samples: Vec<f32> =
+        read_ndarray("tests/blob_data", config.nsamples * config.nfeatures).unwrap(); // N_SAMPLES x N_features (2)
+    let mut samples_classes: Vec<f32> = read_ndarray("tests/blob_class", config.nsamples).unwrap();
     let samples_classes: Vec<usize> = samples_classes.iter_mut().map(|e| *e as usize).collect();
 
-    let dataset = Dataset::build(samples, N_FEATURES);
-    let kmean = Kmeans::new(K, Some(MAX_ITERS));
+    let dataset = Dataset::build(samples, config.nfeatures);
+    let kmean = Kmeans::new(config.nclusters, config.max_iterations);
 
     // Run the algorithm
     let (_centroids, predicted_classes) = kmean.fit(&dataset);
