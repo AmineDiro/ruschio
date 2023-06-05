@@ -1,5 +1,5 @@
 use clap::Parser;
-use ruschio::*;
+use ruschio::{dataset::Dataset, *};
 
 /// Naive Kmean algorithm
 #[derive(Parser, Debug)]
@@ -23,21 +23,26 @@ fn main() {
 
     println!("{:?}", config);
 
-    let samples: Vec<f32> =
-        read_ndarray("tests/blob_data", config.nsamples * config.nfeatures).unwrap(); // N_SAMPLES x N_features (2)
-    let mut samples_classes: Vec<f32> = read_ndarray("tests/blob_class", config.nsamples).unwrap();
-    let samples_classes: Vec<usize> = samples_classes.iter_mut().map(|e| *e as usize).collect();
+    // let samples: Vec<f32> =
+    //     read_ndarray("tests/blob_data", config.nsamples * config.nfeatures).unwrap(); // N_SAMPLES x N_features (2)
+    // let mut samples_classes: Vec<f32> = read_ndarray("tests/blob_class", config.nsamples).unwrap();
+    // let samples_classes: Vec<usize> = samples_classes.iter_mut().map(|e| *e as usize).collect();
 
-    let dataset = Dataset::build(samples, config.nfeatures);
-    let kmean = Kmeans::new(config.nclusters, config.max_iterations);
+    // let dataset = Dataset::build(samples, config.nfeatures);
+    // let kmean = Kmeans::new(config.nclusters, config.max_iterations);
 
-    // Run the algorithm
-    let (_centroids, predicted_classes) = kmean.fit(&dataset);
+    // // Run the algorithm
+    // let (_centroids, predicted_classes) = kmean.fit(&dataset);
 
-    let acc = evaluate(&predicted_classes, &samples_classes);
-    println!("10 Predictions: {:?}", &predicted_classes[0..10]);
-    println!("Accuracy : {}", acc);
+    // let acc = evaluate(&predicted_classes, &samples_classes);
+    // println!("10 Predictions: {:?}", &predicted_classes[0..10]);
+    // println!("Accuracy : {}", acc);
 
-    dump_result(&predicted_classes, "tests/predicted_classes.data")
-        .expect("Error in dumping result");
+    // dump_result(&predicted_classes, "tests/predicted_classes.data")
+    //     .expect("Error in dumping result");
+    let dataset: Dataset<f32> = Dataset::build(vec![1.0; config.nsamples], 2).unwrap();
+
+    for d in dataset.iter() {
+        println!("{:?}", d)
+    }
 }

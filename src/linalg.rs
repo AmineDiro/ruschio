@@ -1,9 +1,7 @@
 use std::simd::f32x4;
 
-use crate::Sample;
-
 #[inline]
-pub fn l2_distance(s1: &Sample, s2: &Sample) -> f32 {
+pub fn l2_distance(s1: &Vec<f32>, s2: &Vec<f32>) -> f32 {
     f32::sqrt(
         s1.iter()
             .zip(s2.iter())
@@ -38,8 +36,8 @@ pub fn l2_distance_simd(xs: &Vec<f32>, ys: &Vec<f32>) -> f32 {
     f32::sqrt(simd_res.iter().sum())
 }
 
-pub fn compute_centroid(samples: &Vec<&Sample>) -> Sample {
-    let mut centroid: Sample = Vec::new();
+pub fn compute_centroid(samples: &Vec<&Vec<f32>>) -> Vec<f32> {
+    let mut centroid: Vec<f32> = Vec::new();
     // todo : figureout how to idiomatically return
     if samples.is_empty() {
         return centroid;

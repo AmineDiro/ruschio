@@ -1,17 +1,13 @@
-STREAM todo 👍
+STREAM todo 👍 Kmeans algorithm implementation
 
-- Kmeans algorithm implementation :
+- [x] Stopping criterion
+- [x]Show results in python
+- [x] Serialize results
+- [x] Plot results
+- [ ] Iteration over Dataset && coallesce data
+- [ ]From File method
 
-  - [x] Stopping criterion
+## Performance :
 
-- Iteration over Dataset && coallesce data
-- From File method
-
-- Show results in python
-
-  - Serialize results
-  - Plot results
-
-- Performance :
-  - SIMD OR Rayon(parallel) L2 distance
-  - Parallel L2 distance in Kmeans
+- [x] Parallel L2 distance in Kmeans
+- [x] SIMD OR Rayon(parallel) L2 distance
