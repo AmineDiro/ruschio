@@ -1,7 +1,9 @@
 use std::simd::f32x4;
 
+use crate::dataset::Dataset;
+
 #[inline]
-pub fn l2_distance(s1: &Vec<f32>, s2: &Vec<f32>) -> f32 {
+pub fn l2_distance(s1: &[f32], s2: &[f32]) -> f32 {
     f32::sqrt(
         s1.iter()
             .zip(s2.iter())
@@ -36,7 +38,7 @@ pub fn l2_distance_simd(xs: &Vec<f32>, ys: &Vec<f32>) -> f32 {
     f32::sqrt(simd_res.iter().sum())
 }
 
-pub fn compute_centroid(samples: &Vec<&Vec<f32>>) -> Vec<f32> {
+pub fn compute_centroid(samples: &Vec<&[f32]>) -> Vec<f32> {
     let mut centroid: Vec<f32> = Vec::new();
     // todo : figureout how to idiomatically return
     if samples.is_empty() {
@@ -96,8 +98,8 @@ mod tests {
 
     #[test]
     fn test_compute_centroid() {
-        let mut samples: Vec<&Vec<f32>> = Vec::new();
-        let sample: Vec<f32> = vec![1.0, 1.0];
+        let mut samples: Vec<&[f32]> = Vec::new();
+        let sample: [f32; 2] = [1.0, 1.0];
         for _ in 0..10 {
             samples.push(&sample);
         }
@@ -108,9 +110,9 @@ mod tests {
     }
     #[test]
     fn test_compute_centroid_complex() {
-        let mut samples: Vec<&Vec<f32>> = Vec::new();
-        let s1: Vec<f32> = vec![1.0, 0.0];
-        let s2: Vec<f32> = vec![0.0, 1.0];
+        let mut samples: Vec<&[f32]> = Vec::new();
+        let s1: [f32; 2] = [1.0, 0.0];
+        let s2: [f32; 2] = [0.0, 1.0];
         samples.push(&s1);
         samples.push(&s2);
         let c = compute_centroid(&samples);

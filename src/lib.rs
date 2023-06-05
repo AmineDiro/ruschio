@@ -1,77 +1,79 @@
 #![feature(portable_simd)]
+use rand::seq::IteratorRandom;
 use rand::Rng;
-use rayon::prelude::*;
+use rayon::vec;
+
 use std::io::{BufWriter, Error};
 use std::{fs::File, io::Write};
 
 pub mod dataset;
 mod linalg;
 
-// #[derive(Debug)]
-// pub struct Kmeans {
-//     // number of clusters
-//     n_clusters: usize,
-//     max_iterations: usize,
-// }
+#[derive(Debug)]
+pub struct Kmeans {
+    // number of clusters
+    n_clusters: usize,
+    max_iterations: usize,
+}
 
-// impl Kmeans {
-//     pub fn new(n_clusters: usize, max_iterations: usize) -> Self {
-//         Kmeans {
-//             n_clusters,
-//             max_iterations: max_iterations,
-//         }
-//     }
+impl Kmeans {
+    pub fn new(n_clusters: usize, max_iterations: usize) -> Self {
+        Kmeans {
+            n_clusters,
+            max_iterations: max_iterations,
+        }
+    }
 
-//     pub fn fit(&self, dataset: &Dataset<f32>) -> (Vec<Sample>, Vec<usize>) {
-//         // Pick random K vectors from the dataset
-//         let mut rng = rand::thread_rng();
-//         let mut centroids: Vec<Sample> = Vec::with_capacity(self.n_clusters);
-//         for _k in 0..self.n_clusters {
-//             let n = rng.gen_range(0..dataset.samples.len());
-//             centroids.push(dataset.samples[n].clone());
-//         }
+    pub fn fit(&self, dataset: &dataset::Dataset<f32>) -> (Vec<Vec<f32>>, Vec<usize>) {
+        // Pick random K vectors from the dataset
+        let mut rng = rand::thread_rng();
+        let mut centroids: Vec<Vec<f32>> = dataset
+            .iter()
+            .choose_multiple(&mut rng, self.n_clusters)
+            .iter()
+            .map(|e| e.to_vec())
+            .collect();
 
-//         // FOR MAX_ITER
-//         let mut pred_classes: Vec<usize> = vec![0; dataset.samples.len()];
-//         for iter in 0..self.max_iterations {
-//             // loop over the dataset
-//             // compute distances to centroids
-//             // Find minimum distance
-//             // Assign datapoint to centroids
-//             let assigment = dataset
-//                 .samples
-//                 .par_iter()
-//                 .map(|sample| {
-//                     let (class, _distance) = centroids
-//                         .iter()
-//                         .map(|c| linalg::l2_distance(c, sample))
-//                         .enumerate()
-//                         .min_by(|&(_, i), &(_, j)| i.total_cmp(&j))
-//                         .unwrap();
-//                     class
-//                 })
-//                 .collect();
-//             // Stopping criterion : if pred_classes didn't change
-//             if assigment != pred_classes {
-//                 pred_classes = assigment;
-//                 // recompute cluster centroids
-//                 for k in 0..self.n_clusters {
-//                     let filtered_samples: Vec<&Sample> = pred_classes
-//                         .iter()
-//                         .zip(dataset.samples.iter())
-//                         .filter(|&(class, _)| *class == k)
-//                         .map(|(_, item)| item)
-//                         .collect();
-//                     centroids[k] = linalg::compute_centroid(&filtered_samples);
-//                 }
-//             } else {
-//                 println!("Converged after {} iterations.", iter);
-//                 break;
-//             }
-//         }
-//         (centroids, pred_classes)
-//     }
-// }
+        // FOR MAX_ITER
+        let mut pred_classes: Vec<usize> = vec![0; dataset.nsamples];
+        for iter in 0..self.max_iterations {
+            // loop over the dataset
+            // compute distances to centroids
+            // Find minimum distance
+            // Assign datapoint to centroids
+            let assigment = dataset
+                .iter()
+                .map(|sample| {
+                    let (class, _distance) = centroids
+                        .iter()
+                        .map(|c| linalg::l2_distance(c, sample))
+                        .enumerate()
+                        .min_by(|&(_, i), &(_, j)| i.total_cmp(&j))
+                        .unwrap();
+                    class
+                })
+                .collect();
+            // Stopping criterion : if pred_classes didn't change
+            if assigment != pred_classes {
+                pred_classes = assigment;
+                // recompute cluster centroids
+                for k in 0..self.n_clusters {
+                    let filtered_samples: Vec<&[f32]> = pred_classes
+                        .iter()
+                        .zip(dataset.iter())
+                        .filter(|&(class, _)| *class == k)
+                        .map(|(_, item)| item)
+                        .collect();
+                    centroids[k] = linalg::compute_centroid(&filtered_samples);
+                }
+            } else {
+                println!("Converged after {} iterations.", iter);
+                break;
+            }
+        }
+        (centroids, pred_classes)
+    }
+}
 
 pub fn dump_result(classes: &Vec<usize>, file_path: &str) -> Result<(), Error> {
     let f = File::create(file_path)?;

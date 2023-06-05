@@ -22,6 +22,7 @@ impl Error for DatasetCreationError {
 pub struct DatasetIterator<'a, T>
 where
     T: 'a,
+    T: Sized,
 {
     slice: &'a [T],
     nfeatures: usize,

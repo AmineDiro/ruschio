@@ -28,22 +28,15 @@ fn main() {
     // let mut samples_classes: Vec<f32> = read_ndarray("tests/blob_class", config.nsamples).unwrap();
     // let samples_classes: Vec<usize> = samples_classes.iter_mut().map(|e| *e as usize).collect();
 
-    // let dataset = Dataset::build(samples, config.nfeatures);
-    // let kmean = Kmeans::new(config.nclusters, config.max_iterations);
-
-    // // Run the algorithm
-    // let (_centroids, predicted_classes) = kmean.fit(&dataset);
-
-    // let acc = evaluate(&predicted_classes, &samples_classes);
-    // println!("10 Predictions: {:?}", &predicted_classes[0..10]);
-    // println!("Accuracy : {}", acc);
-
-    // dump_result(&predicted_classes, "tests/predicted_classes.data")
-    //     .expect("Error in dumping result");
     let dataset: Dataset<f32> =
         Dataset::from_file("tests/blob_data", config.nsamples, config.nfeatures).unwrap();
+    let kmean = Kmeans::new(config.nclusters, config.max_iterations);
 
-    for d in dataset.iter() {
-        println!("{:?}", d)
-    }
+    // // Run the algorithm
+    let (_centroids, predicted_classes) = kmean.fit(&dataset);
+
+    // let acc = evaluate(&predicted_classes, &samples_classes);
+    println!("10 Predictions: {:?}", &predicted_classes[0..10]);
+
+    dump_result(&predicted_classes, "tests/predicted_classes.data").unwrap()
 }
