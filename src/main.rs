@@ -40,7 +40,8 @@ fn main() {
 
     // dump_result(&predicted_classes, "tests/predicted_classes.data")
     //     .expect("Error in dumping result");
-    let dataset: Dataset<f32> = Dataset::build(vec![1.0; config.nsamples], 2).unwrap();
+    let dataset: Dataset<f32> =
+        Dataset::from_file("tests/blob_data", config.nsamples, config.nfeatures).unwrap();
 
     for d in dataset.iter() {
         println!("{:?}", d)

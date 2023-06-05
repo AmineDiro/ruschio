@@ -96,8 +96,8 @@ mod tests {
 
     #[test]
     fn test_compute_centroid() {
-        let mut samples: Vec<&Sample> = Vec::new();
-        let sample: Sample = vec![1.0, 1.0];
+        let mut samples: Vec<&Vec<f32>> = Vec::new();
+        let sample: Vec<f32> = vec![1.0, 1.0];
         for _ in 0..10 {
             samples.push(&sample);
         }
@@ -108,9 +108,9 @@ mod tests {
     }
     #[test]
     fn test_compute_centroid_complex() {
-        let mut samples: Vec<&Sample> = Vec::new();
-        let s1: Sample = vec![1.0, 0.0];
-        let s2: Sample = vec![0.0, 1.0];
+        let mut samples: Vec<&Vec<f32>> = Vec::new();
+        let s1: Vec<f32> = vec![1.0, 0.0];
+        let s2: Vec<f32> = vec![0.0, 1.0];
         samples.push(&s1);
         samples.push(&s2);
         let c = compute_centroid(&samples);

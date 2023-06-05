@@ -1,39 +1,11 @@
 #![feature(portable_simd)]
 use rand::Rng;
 use rayon::prelude::*;
-use std::io::{BufReader, Read};
 use std::io::{BufWriter, Error};
 use std::{fs::File, io::Write};
 
 pub mod dataset;
 mod linalg;
-
-pub trait AsBytes {
-    fn from_bytes(bytes: [u8; 4]) -> Self;
-}
-
-impl AsBytes for f32 {
-    fn from_bytes(bytes: [u8; 4]) -> Self {
-        f32::from_le_bytes(bytes)
-    }
-}
-
-pub fn read_ndarray<T: AsBytes>(file_path: &str, size: usize) -> Option<Vec<T>> {
-    let mut data: Vec<T> = Vec::new();
-    let f = File::open(file_path).expect("Failed to read file.");
-    let mut reader = BufReader::new(f);
-    let mut buffer = [0u8; std::mem::size_of::<f32>()];
-    loop {
-        if let Err(_error) = reader.read_exact(&mut buffer) {
-            break;
-        }
-        data.push(T::from_bytes(buffer))
-    }
-    if data.len() != size {
-        return None;
-    }
-    Some(data)
-}
 
 // #[derive(Debug)]
 // pub struct Kmeans {
