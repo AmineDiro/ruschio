@@ -1,7 +1,5 @@
 use std::simd::f32x4;
 
-use crate::dataset::Dataset;
-
 #[inline]
 pub fn l2_distance(s1: &[f32], s2: &[f32]) -> f32 {
     f32::sqrt(
@@ -56,6 +54,7 @@ pub fn compute_centroid(samples: &Vec<&[f32]>) -> Vec<f32> {
 }
 
 mod tests {
+    #[allow(unused_imports)]
     use super::*;
 
     #[test]

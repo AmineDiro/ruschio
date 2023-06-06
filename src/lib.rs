@@ -1,8 +1,5 @@
 #![feature(portable_simd)]
 use rand::seq::IteratorRandom;
-use rand::Rng;
-use rayon::vec;
-
 use std::io::{BufWriter, Error};
 use std::{fs::File, io::Write};
 
